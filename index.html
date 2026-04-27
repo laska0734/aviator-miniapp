@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aviator™ — Fly & Win</title>
+
+<!-- Telegram Web App SDK — обязательно первым -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #0a0008;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* ══ BG ══ */
+.bg-wrap {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 110% 60% at 75% 0%, rgba(180,0,0,0.25) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 0% 100%, rgba(80,0,140,0.22) 0%, transparent 55%),
+    linear-gradient(160deg, #1a0010 0%, #0a0008 60%, #030006 100%);
+}
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 38px 38px;
+  opacity: 0.14;
+}
+.stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.star {
+  position: absolute; background: #fff; border-radius: 50%;
+  animation: tw var(--d,3s) ease-in-out infinite var(--dl,0s);
+  opacity: var(--op,.4);
+}
+@keyframes tw { 0%,100%{opacity:var(--op,.4)} 50%{opacity:.05} }
+
+/* ══ PAGE ══ */
+.page {
+  position: relative; z-index: 2;
+  max-width: 480px; margin: 0 auto;
+  padding: 0 16px 120px; /* 120px — место под MainButton */
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  gap: 12px;
+}
+
+/* ══ TOPBAR ══ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 16px;
+}
+.app-info { display: flex; align-items: center; gap: 10px; }
+.app-icon {
+  width: 48px; height: 48px; border-radius: 13px;
+  background: linear-gradient(135deg, #1a0a0a, #3a0000);
+  border: 1.5px solid rgba(255,60,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 0 18px rgba(255,40,0,0.28);
+}
+.app-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 0.08em; line-height: 1;
+}
+.app-sub { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+.app-rating { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.app-rating span { color: #f9a825; }
+
+.verified-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(0,200,100,0.1);
+  border: 1px solid rgba(0,200,100,0.25);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 10px; font-weight: 700; color: #00e676;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.vdot { width: 6px; height: 6px; background: #00e676; border-radius: 50%; animation: vb 1s step-start infinite; }
+@keyframes vb { 50%{opacity:0} }
+
+/* ══ URGENCY ══ */
+.urgency-bar {
+  background: linear-gradient(90deg, rgba(255,40,0,0.14), rgba(255,100,0,0.08), rgba(255,40,0,0.14));
+  border: 1px solid rgba(255,60,0,0.3);
+  border-radius: 10px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.urg-icon { font-size: 20px; animation: shk .5s ease-in-out infinite; flex-shrink: 0; }
+@keyframes shk { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+.urg-text { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.82); line-height: 1.35; flex: 1; }
+.urg-text b { color: #ff4400; }
+.urg-timer {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px; color: #ff4400; letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba(255,68,0,0.5); flex-shrink: 0;
+}
+
+/* ══ BONUS CARD ══ */
+.bonus-card {
+  background: linear-gradient(135deg, rgba(255,200,0,0.07), rgba(255,100,0,0.04));
+  border: 1px solid rgba(255,180,0,0.18);
+  border-radius: 16px; padding: 16px 18px;
+  position: relative; overflow: hidden;
+}
+.bonus-card::before {
+  content: '';
+  position: absolute; top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,200,0,0.05), transparent);
+  animation: hs 3.5s ease-in-out infinite;
+}
+@keyframes hs { 0%{left:-100%} 50%,100%{left:150%} }
+.bonus-label {
+  font-size: 10px; font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase; letter-spacing: 0.18em; margin-bottom: 6px;
+}
+.bonus-row { display: flex; align-items: flex-end; gap: 10px; }
+.bonus-pct {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 16vw, 76px);
+  color: #f9ff00; line-height: 0.88;
+  text-shadow: 0 0 36px rgba(249,255,0,0.3);
+  letter-spacing: 0.02em;
+}
+.bonus-desc { padding-bottom: 4px; }
+.bonus-desc-title {
+  font-size: 18px; font-weight: 900; color: #fff; line-height: 1.1;
+}
+.bonus-desc-sub {
+  font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; line-height: 1.3;
+}
+.bonus-chips {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
+}
+.chip {
+  background: rgba(249,255,0,0.09);
+  border: 1px solid rgba(249,255,0,0.22);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11px; font-weight: 700; color: #f9ff00;
+}
+
+/* ══ PLANE ZONE ══ */
+.plane-zone {
+  position: relative;
+  height: clamp(90px, 20vh, 140px);
+  overflow: hidden;
+}
+.curve-svg {
+  position: absolute; bottom: 0; left: -16px;
+  width: calc(100% + 32px); height: 100%;
+  pointer-events: none;
+}
+.plane-group {
+  position: absolute; right: 4%; top: 2%;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  animation: fly 4s ease-in-out infinite;
+  transform: rotate(-20deg);
+}
+@keyframes fly {
+  0%,100%{transform:rotate(-18deg) translateY(0)}
+  50%{transform:rotate(-22deg) translateY(-9px)}
+}
+.plane-img { width: clamp(75px, 22vw, 140px); height: auto; display: block; }
+.mult-badge {
+  background: rgba(8,0,6,0.92);
+  border: 1px solid rgba(249,255,0,0.5);
+  border-radius: 7px; padding: 3px 12px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(15px, 4.5vw, 21px);
+  color: #f9ff00; white-space: nowrap;
+  transform: rotate(20deg);
+  text-shadow: 0 0 10px rgba(249,255,0,0.4);
+  animation: mp 1.2s ease-in-out infinite;
+}
+@keyframes mp { 0%,100%{opacity:1} 50%{opacity:.72} }
+
+/* ══ STATS ══ */
+.stats-row { display: flex; gap: 8px; }
+.stat {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(17px, 5vw, 23px);
+  color: #f9ff00; line-height: 1; letter-spacing: 0.04em;
+}
+.stat-label {
+  font-size: 9px; color: rgba(255,255,255,0.32);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px;
+}
+
+/* ══ PROGRESS ══ */
+.progress-block { }
+.progress-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; font-weight: 700; margin-bottom: 5px;
+  color: rgba(255,255,255,0.38); text-transform: uppercase; letter-spacing: 0.08em;
+}
+.progress-labels span { color: #f9ff00; }
+.progress-track {
+  width: 100%; height: 5px;
+  background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f9ff00, #ff9900);
+  border-radius: 3px; width: 74%;
+  animation: pgrow 18s linear infinite;
+  box-shadow: 0 0 8px rgba(249,255,0,0.35);
+}
+@keyframes pgrow {
+  0%{width:65%} 45%{width:91%} 46%{width:65%} 100%{width:65%}
+}
+
+/* ══ LIVE FEED ══ */
+.feed-section { }
+.feed-head {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+}
+.live-dot { width: 7px; height: 7px; background: #00e676; border-radius: 50%; animation: lb 1s step-start infinite; }
+@keyframes lb { 50%{opacity:0} }
+.feed-head-text {
+  font-size: 10px; font-weight: 700;
+  color: rgba(255,255,255,0.38);
+  letter-spacing: 0.15em; text-transform: uppercase;
+}
+.feed-cards { display: flex; flex-direction: column; gap: 6px; }
+.wcard {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 9px 12px;
+  animation: wci 0.4s ease forwards;
+}
+@keyframes wci { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.wcard-av {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 900; color: #000; flex-shrink: 0;
+}
+.wcard-info { flex: 1; min-width: 0; }
+.wcard-name {
+  font-size: 12px; font-weight: 700; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;
+}
+.wcard-detail {
+  font-size: 10px; color: rgba(255,255,255,0.33); margin-top: 2px; line-height: 1;
+}
+.wcard-detail em { color: rgba(249,255,0,0.7); font-style: normal; font-weight: 700; }
+.wcard-win { flex-shrink: 0; text-align: right; }
+.wcard-amt { font-size: 15px; font-weight: 900; color: #00e676; line-height: 1; }
+.wcard-bet { font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 2px; }
+
+/* ══ PAYMENTS ══ */
+.payments-wrap {
+  display: flex; justify-content: center; padding: 4px 0;
+}
+.pay-img { height: 34px; width: auto; object-fit: contain; max-width: 100%; }
+
+/* ══ TRUST ══ */
+.trust {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px; padding-bottom: 4px;
+}
+.ti {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 9px; font-weight: 700;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.ti-dot { width: 4px; height: 4px; background: #f9ff00; border-radius: 50%; flex-shrink: 0; }
+
+/* ══ FALLBACK кнопка (если TG MainButton не работает) ══ */
+.fallback-btn {
+  display: none; /* показывается через JS если не TG */
+  align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #bdd000, #d4e800, #9fb800);
+  color: #000;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 0.12em;
+  text-decoration: none; padding: 18px; border-radius: 13px;
+  box-shadow: 0 8px 32px rgba(212,232,0,0.42);
+  position: relative; overflow: hidden;
+}
+.fallback-btn::before {
+  content: '';
+  position: absolute; top: 0; left: -100%;
+  width: 55%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.26), transparent);
+  animation: shine 2.8s ease-in-out infinite;
+}
+@keyframes shine { 0%{left:-100%} 50%,100%{left:150%} }
+</style>
+</head>
+<body>
+
+<div class="bg-wrap"></div>
+<div class="bg-grid"></div>
+<div class="stars" id="stars"></div>
+
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="app-info">
+      <div class="app-icon">✈️</div>
+      <div>
+        <div class="app-name">Aviator™</div>
+        <div class="app-sub">by Spribe · Official Partner</div>
+        <div class="app-rating"><span>★★★★★</span> 4.9 · 3.1M players</div>
+      </div>
+    </div>
+    <div class="verified-badge">
+      <div class="vdot"></div>Verified
+    </div>
+  </div>
+
+  <!-- URGENCY -->
+  <div class="urgency-bar">
+    <div class="urg-icon">🔥</div>
+    <div class="urg-text"><b>Limited offer!</b> First deposit bonus expires in</div>
+    <div class="urg-timer" id="timer">14:59</div>
+  </div>
+
+  <!-- BONUS CARD -->
+  <div class="bonus-card">
+    <div class="bonus-label">First deposit bonus — India exclusive</div>
+    <div class="bonus-row">
+      <div class="bonus-pct">700%</div>
+      <div class="bonus-desc">
+        <div class="bonus-desc-title">Welcome<br>Bonus</div>
+        <div class="bonus-desc-sub">up to <b style="color:#fff">₹40,000</b><br>on first deposit</div>
+      </div>
+    </div>
+    <div class="bonus-chips">
+      <div class="chip">⚡ Instant</div>
+      <div class="chip">📲 UPI / PhonePe</div>
+      <div class="chip">🔄 Fast withdrawal</div>
+    </div>
+  </div>
+
+  <!-- PLANE + CURVE -->
+  <div class="plane-zone">
+    <svg class="curve-svg" viewBox="0 0 400 120" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"  stop-color="#f9ff00" stop-opacity="0"/>
+          <stop offset="40%" stop-color="#f9ff00" stop-opacity="0.65"/>
+          <stop offset="100%" stop-color="#f9ff00" stop-opacity="1"/>
+        </linearGradient>
+        <filter id="gl">
+          <feGaussianBlur stdDeviation="2.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path d="M 0 116 Q 80 110 170 82 Q 270 48 355 14 Q 378 7 396 3"
+            stroke="url(#cg)" stroke-width="2.5" filter="url(#gl)"/>
+      <path d="M 0 116 Q 80 110 170 82 Q 270 48 355 14 Q 378 7 396 3"
+            stroke="#f9ff00" stroke-width="8" opacity="0.08"/>
+      <path d="M 0 116 Q 80 110 170 82 Q 270 48 355 14 Q 378 7 396 3 L 400 120 L 0 120 Z"
+            fill="#f9ff00" opacity="0.04"/>
+    </svg>
+    <div class="plane-group">
+      <img class="plane-img" src="plane-transparent.png" alt="Aviator plane">
+      <div class="mult-badge" id="mult">7.24x</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val" id="cnt">263K+</div>
+      <div class="stat-label">Playing now</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">₹2.4Cr</div>
+      <div class="stat-label">Won today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">4.9★</div>
+      <div class="stat-label">Rating</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="slots-val">27</div>
+      <div class="stat-label">Bonus slots</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-block">
+    <div class="progress-labels">
+      <span>Bonus slots filling fast</span>
+      <span id="pct-label">74% claimed</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- LIVE FEED -->
+  <div class="feed-section">
+    <div class="feed-head">
+      <div class="live-dot"></div>
+      <span class="feed-head-text">Live wins · अभी जीते</span>
+    </div>
+    <div class="feed-cards" id="feed"></div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="payments-wrap">
+    <img class="pay-img" src="logo-footer.webp" alt="UPI PhonePe Paytm GPay BTC USDT">
+  </div>
+
+  <!-- TRUST -->
+  <div class="trust">
+    <div class="ti"><div class="ti-dot"></div>Licensed</div>
+    <div class="ti"><div class="ti-dot"></div>SSL Secured</div>
+    <div class="ti"><div class="ti-dot"></div>18+</div>
+  </div>
+
+  <!-- FALLBACK кнопка — показывается если открыт не в Telegram -->
+  <a href="#" class="fallback-btn" id="fallback-btn">
+    📲 GET 700% BONUS NOW
+  </a>
+
+</div><!-- /page -->
+
+<script>
+/* ════════════════════════════════
+   TELEGRAM INIT
+════════════════════════════════ */
+var tg = window.Telegram && window.Telegram.WebApp;
+var isTG = !!(tg && tg.initData);
+
+// Получаем sub_id из start_param (передаётся через t.me/bot?startapp=SUB_ID)
+var subId = '';
+if (isTG && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+  subId = tg.initDataUnsafe.start_param;
+}
+
+// Также проверяем URL параметры (для редиректа через Binom)
+var urlParams = new URLSearchParams(window.location.search);
+if (!subId) subId = urlParams.get('sub_id') || urlParams.get('click_id') || '';
+
+// Финальная ссылка — {offer_link} заменяется трекером Binom
+// sub_id передаётся как параметр для атрибуции
+var OFFER_URL = '{offer_link}' + (subId ? '&sub_id2=' + subId : '');
+
+if (isTG) {
+  /* ── Telegram настройки ── */
+  tg.ready();
+  tg.expand(); // на весь экран
+
+  // Цвета под тему лендинга
+  tg.setHeaderColor('#0a0008');
+  tg.setBackgroundColor('#0a0008');
+
+  /* ── Главная кнопка Telegram ── */
+  tg.MainButton.setParams({
+    text: '📲  GET 700% BONUS NOW',
+    color: '#d4e800',
+    text_color: '#000000',
+    is_active: true,
+    is_visible: true
+  });
+
+  tg.MainButton.onClick(function() {
+    tg.openLink(OFFER_URL);
+  });
+
+  tg.MainButton.show();
+
+  /* ── Back button ── */
+  tg.BackButton.show();
+  tg.BackButton.onClick(function() {
+    tg.close();
+  });
+
+} else {
+  /* ── Fallback: открыт в браузере, не в TG ── */
+  var btn = document.getElementById('fallback-btn');
+  btn.style.display = 'flex';
+  btn.href = OFFER_URL;
+}
+
+/* ════════════════════════════════
+   STARS
+════════════════════════════════ */
+var sf = document.getElementById('stars');
+for (var i = 0; i < 80; i++) {
+  var s = document.createElement('div');
+  s.className = 'star';
+  var sz = Math.random() * 2 + 0.4;
+  s.style.cssText =
+    'width:'+sz+'px;height:'+sz+'px;' +
+    'left:'+(Math.random()*100)+'%;' +
+    'top:'+(Math.random()*100)+'%;' +
+    '--d:'+(2+Math.random()*5)+'s;' +
+    '--dl:'+(Math.random()*5)+'s;' +
+    '--op:'+(0.2+Math.random()*0.55);
+  sf.appendChild(s);
+}
+
+/* ════════════════════════════════
+   MULTIPLIER
+════════════════════════════════ */
+var mv = 1.00, growing = true;
+var multEl = document.getElementById('mult');
+function tickMult() {
+  if (growing) {
+    mv += Math.random() * 0.18 + 0.04;
+    if (mv > 18 || Math.random() < 0.004) { growing = false; mv = 1.00; }
+  } else { growing = true; }
+  multEl.textContent = mv.toFixed(2) + 'x';
+  setTimeout(tickMult, growing ? 140 + Math.random() * 110 : 500);
+}
+tickMult();
+
+/* ════════════════════════════════
+   COUNTDOWN TIMER
+════════════════════════════════ */
+var secs = 14 * 60 + 59;
+var timerEl = document.getElementById('timer');
+setInterval(function() {
+  if (secs > 0) secs--;
+  var m = Math.floor(secs / 60);
+  var sc = secs % 60;
+  timerEl.textContent = (m<10?'0':'')+m+':'+(sc<10?'0':'')+sc;
+}, 1000);
+
+/* ════════════════════════════════
+   PLAYERS COUNTER
+════════════════════════════════ */
+var n = 263412;
+var cntEl = document.getElementById('cnt');
+function tickN() {
+  n += Math.floor(Math.random() * 12) - 4;
+  if (n < 261000) n = 261000;
+  if (n > 267000) n = 267000;
+  cntEl.textContent = (n/1000).toFixed(0) + 'K+';
+  setTimeout(tickN, 2200 + Math.random() * 2000);
+}
+tickN();
+
+/* ════════════════════════════════
+   BONUS SLOTS
+════════════════════════════════ */
+var slots = 27;
+var slotsEl = document.getElementById('slots-val');
+setInterval(function() {
+  if (slots > 7 && Math.random() < 0.35) {
+    slots--;
+    slotsEl.textContent = slots;
+  }
+}, 7000);
+
+/* ════════════════════════════════
+   LIVE FEED
+════════════════════════════════ */
+var names = [
+  'Rahul S.','Priya K.','Amit M.','Sneha R.','Vikram P.',
+  'Pooja T.','Arjun D.','Kavya N.','Rohit B.','Ananya S.',
+  'Deepak V.','Meera J.','Suresh L.','Divya C.','Kiran A.',
+  'Ravi G.','Nisha W.','Sanjay H.','Lakshmi F.','Ajay Q.','Sunita X.'
+];
+var cities = ['Mumbai','Delhi','Bangalore','Hyderabad','Chennai','Pune','Kolkata','Jaipur','Ahmedabad','Surat'];
+var colors = ['#f9a825','#e53935','#8e24aa','#00897b','#1e88e5','#43a047','#fb8c00','#d81b60','#00acc1'];
+
+function randWin() {
+  var mult  = (1.8 + Math.random() * 16).toFixed(2);
+  var bets  = [200,300,500,750,1000,1500,2000,2500,5000];
+  var bet   = bets[Math.floor(Math.random() * bets.length)];
+  return {
+    name  : names[Math.floor(Math.random() * names.length)],
+    city  : cities[Math.floor(Math.random() * cities.length)],
+    mult  : mult,
+    bet   : bet,
+    win   : Math.round(bet * parseFloat(mult)),
+    color : colors[Math.floor(Math.random() * colors.length)],
+    ago   : Math.floor(Math.random() * 3)
+  };
+}
+
+var pool = [randWin(), randWin(), randWin()];
+
+function renderFeed() {
+  var fc = document.getElementById('feed');
+  fc.innerHTML = '';
+  pool.forEach(function(w, i) {
+    var d = document.createElement('div');
+    d.className = 'wcard';
+    d.style.animationDelay = (i * 0.07) + 's';
+    d.innerHTML =
+      '<div class="wcard-av" style="background:'+w.color+'">'+w.name[0]+'</div>'+
+      '<div class="wcard-info">'+
+        '<div class="wcard-name">'+w.name+' · '+w.city+'</div>'+
+        '<div class="wcard-detail">cashed out at <em>'+w.mult+'x</em> · '+(w.ago===0?'just now':w.ago+' min ago')+'</div>'+
+      '</div>'+
+      '<div class="wcard-win">'+
+        '<div class="wcard-amt">+₹'+w.win.toLocaleString()+'</div>'+
+        '<div class="wcard-bet">bet ₹'+w.bet+'</div>'+
+      '</div>';
+    fc.appendChild(d);
+  });
+}
+
+renderFeed();
+setInterval(function() {
+  pool.shift();
+  pool.push(randWin());
+  renderFeed();
+}, 5000);
+</script>
+
+</body>
+</html>
