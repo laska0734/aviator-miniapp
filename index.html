@@ -139,7 +139,38 @@ html, body {
 .bonus-desc-sub {
   font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; line-height: 1.3;
 }
-.bonus-chips {
+.bonus-table {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bonus-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.04);
+  border-radius: 7px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.bonus-dep {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+}
+.bonus-val {
+  font-size: 13px;
+  font-weight: 900;
+  color: #f9ff00;
+}
+.bonus-val span {
+  color: rgba(255,255,255,0.6);
+  font-weight: 600;
+  font-size: 11px;
+  margin-left: 4px;
+}
   display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
 }
 .chip {
@@ -284,20 +315,22 @@ html, body {
 }
 .ti-dot { width: 4px; height: 4px; background: #f9ff00; border-radius: 50%; flex-shrink: 0; }
 
-/* ══ FALLBACK кнопка (если TG MainButton не работает) ══ */
-.fallback-btn {
-  display: none; /* показывается через JS если не TG */
+/* ══ MAIN CTA BUTTON ══ */
+.main-cta-btn {
+  display: flex;
   align-items: center; justify-content: center; gap: 10px;
   width: 100%;
   background: linear-gradient(135deg, #bdd000, #d4e800, #9fb800);
   color: #000;
   font-family: 'Bebas Neue', sans-serif;
   font-size: 22px; letter-spacing: 0.12em;
-  text-decoration: none; padding: 18px; border-radius: 13px;
+  border: none; cursor: pointer;
+  padding: 18px; border-radius: 13px;
   box-shadow: 0 8px 32px rgba(212,232,0,0.42);
   position: relative; overflow: hidden;
+  transition: transform 0.12s ease;
 }
-.fallback-btn::before {
+.main-cta-btn::before {
   content: '';
   position: absolute; top: 0; left: -100%;
   width: 55%; height: 100%;
@@ -305,6 +338,7 @@ html, body {
   animation: shine 2.8s ease-in-out infinite;
 }
 @keyframes shine { 0%{left:-100%} 50%,100%{left:150%} }
+.main-cta-btn:active { transform: scale(0.975); }
 </style>
 </head>
 <body>
@@ -339,12 +373,31 @@ html, body {
 
   <!-- BONUS CARD -->
   <div class="bonus-card">
-    <div class="bonus-label">First deposit bonus — India exclusive</div>
+    <div class="bonus-label">Welcome bonus — India exclusive</div>
     <div class="bonus-row">
-      <div class="bonus-pct">700%</div>
+      <div class="bonus-pct">500%</div>
       <div class="bonus-desc">
         <div class="bonus-desc-title">Welcome<br>Bonus</div>
-        <div class="bonus-desc-sub">up to <b style="color:#fff">₹40,000</b><br>on first deposit</div>
+        <div class="bonus-desc-sub">तक बोनस<br>4 deposits</div>
+      </div>
+    </div>
+    <!-- Bonus breakdown table -->
+    <div class="bonus-table">
+      <div class="bonus-row-item">
+        <div class="bonus-dep">1st deposit</div>
+        <div class="bonus-val">+100% <span>+ 70 FS</span></div>
+      </div>
+      <div class="bonus-row-item">
+        <div class="bonus-dep">2nd deposit</div>
+        <div class="bonus-val">+120% <span>+ 100 FS</span></div>
+      </div>
+      <div class="bonus-row-item">
+        <div class="bonus-dep">3rd deposit</div>
+        <div class="bonus-val">+130% <span>+ 150 FS</span></div>
+      </div>
+      <div class="bonus-row-item">
+        <div class="bonus-dep">4th deposit</div>
+        <div class="bonus-val">+150% <span>+ 180 FS</span></div>
       </div>
     </div>
     <div class="bonus-chips">
@@ -392,8 +445,8 @@ html, body {
       <div class="stat-label">Won today</div>
     </div>
     <div class="stat">
-      <div class="stat-val">4.9★</div>
-      <div class="stat-label">Rating</div>
+      <div class="stat-val">500%</div>
+      <div class="stat-label">Max bonus</div>
     </div>
     <div class="stat">
       <div class="stat-val" id="slots-val">27</div>
@@ -433,11 +486,6 @@ html, body {
     <div class="ti"><div class="ti-dot"></div>18+</div>
   </div>
 
-  <!-- FALLBACK кнопка — показывается если открыт не в Telegram -->
-  <a href="#" class="fallback-btn" id="fallback-btn">
-    📲 GET 700% BONUS NOW
-  </a>
-
 </div><!-- /page -->
 
 <script>
@@ -447,55 +495,46 @@ html, body {
 var tg = window.Telegram && window.Telegram.WebApp;
 var isTG = !!(tg && tg.initData);
 
-// Получаем sub_id из start_param (передаётся через t.me/bot?startapp=SUB_ID)
+// Получаем sub_id
 var subId = '';
 if (isTG && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
   subId = tg.initDataUnsafe.start_param;
 }
-
-// Также проверяем URL параметры (для редиректа через Binom)
 var urlParams = new URLSearchParams(window.location.search);
 if (!subId) subId = urlParams.get('sub_id') || urlParams.get('click_id') || '';
 
-// Финальная ссылка — {offer_link} заменяется трекером Binom
-// sub_id передаётся как параметр для атрибуции
-var OFFER_URL = https://infodealsshop.online/cbehl5k.php?key=6c5nhfrzo1nxjahqbhgl&ad_name={{ad.name}}&adset_name={{adset.name}}&campaign_name={{campaign.name}}&sub_id_4={{sub4}}&sub_id_5={{sub5}}&sub_id_6={{sub6}} + (subId ? '&sub_id2=' + subId : '');
+var OFFER_URL = 'https://infodealsshop.online/cbehl5k.php?key=6c5nhfrzo1nxjahqbhg' + (subId ? '&sub_id2=' + subId : '');
+
+function goToOffer() {
+  if (isTG) tg.MainButton.hide();
+  window.location.href = OFFER_URL;
+}
+
+// ── ПОВТОРНЫЙ ВИЗИТ — сразу на оффер ──
+if (localStorage.getItem('av_seen') === '1') {
+  goToOffer();
+}
+localStorage.setItem('av_seen', '1');
 
 if (isTG) {
-  /* ── Telegram настройки ── */
   tg.ready();
-  tg.expand(); // на весь экран
-
-  // Цвета под тему лендинга
+  tg.expand();
   tg.setHeaderColor('#0a0008');
   tg.setBackgroundColor('#0a0008');
 
-  /* ── Главная кнопка Telegram ── */
   tg.MainButton.setParams({
-    text: '📲  GET 700% BONUS NOW',
+    text: '📲  GET 500% BONUS NOW',
     color: '#d4e800',
     text_color: '#000000',
     is_active: true,
     is_visible: true
   });
 
-  tg.MainButton.onClick(function() {
-    tg.openLink(OFFER_URL);
-  });
-
+  tg.MainButton.onClick(goToOffer);
   tg.MainButton.show();
 
-  /* ── Back button ── */
   tg.BackButton.show();
-  tg.BackButton.onClick(function() {
-    tg.close();
-  });
-
-} else {
-  /* ── Fallback: открыт в браузере, не в TG ── */
-  var btn = document.getElementById('fallback-btn');
-  btn.style.display = 'flex';
-  btn.href = OFFER_URL;
+  tg.BackButton.onClick(function() { tg.close(); });
 }
 
 /* ════════════════════════════════
