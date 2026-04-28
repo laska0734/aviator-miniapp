@@ -48,7 +48,7 @@ html, body {
 .page {
   position: relative; z-index: 2;
   max-width: 480px; margin: 0 auto;
-  padding: 0 16px 120px; /* 120px — место под MainButton */
+  padding: 0 16px 32px;
   min-height: 100vh;
   display: flex; flex-direction: column;
   gap: 12px;
@@ -486,6 +486,11 @@ html, body {
     <div class="ti"><div class="ti-dot"></div>18+</div>
   </div>
 
+  <!-- CTA -->
+  <button id="cta-btn" class="main-cta-btn">
+    📲 GET 500% BONUS NOW
+  </button>
+
 </div><!-- /page -->
 
 <script>
@@ -505,14 +510,9 @@ if (!subId) subId = urlParams.get('sub_id') || urlParams.get('click_id') || '';
 
 var OFFER_URL = 'https://infodealsshop.online/cbehl5k.php?key=6c5nhfrzo1nxjahqbhg' + (subId ? '&sub_id2=' + subId : '');
 
-function goToOffer() {
-  if (isTG) tg.MainButton.hide();
-  window.location.href = https://infodealsshop.online/cbehl5k.php?key=6c5nhfrzo1nxjahqbhgl&ad_name={{ad.name}}&adset_name={{adset.name}}&campaign_name={{campaign.name}}&sub_id_4={{sub4}}&sub_id_5={{sub5}}&sub_id_6={{sub6}};
-}
-
 // ── ПОВТОРНЫЙ ВИЗИТ — сразу на оффер ──
 if (localStorage.getItem('av_seen') === '1') {
-  goToOffer();
+  window.location.href = OFFER_URL;
 }
 localStorage.setItem('av_seen', '1');
 
@@ -521,21 +521,12 @@ if (isTG) {
   tg.expand();
   tg.setHeaderColor('#0a0008');
   tg.setBackgroundColor('#0a0008');
-
-  tg.MainButton.setParams({
-    text: '📲  GET 500% BONUS NOW',
-    color: '#d4e800',
-    text_color: '#000000',
-    is_active: true,
-    is_visible: true
-  });
-
-  tg.MainButton.onClick(goToOffer);
-  tg.MainButton.show();
-
-  tg.BackButton.show();
-  tg.BackButton.onClick(function() { tg.close(); });
 }
+
+// HTML кнопка
+document.getElementById('cta-btn').addEventListener('click', function() {
+  window.location.href = OFFER_URL;
+});
 
 /* ════════════════════════════════
    STARS
